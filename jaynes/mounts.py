@@ -65,12 +65,12 @@ class S3Code(Mount):
     - kubernetes' volume_path corresponds to `container_path`. The `subPath` corresponds to `host_path` in some sense.
     - mount_path corresponds to raw mounting path in the init container.
 
-    :param local_path: path to the local directory. Doesn't have to be absolute.
+    :param local_path: path to the local directory. Doesn't have to be absolute. This is the path that gets uploaded to S3 and mounted onto your Docker image
     :param prefix: The s3 prefix including the s3: protocol, the bucket, and the path prefix.
     :param host_path: The path on the remote instance. Default /tmp/{uuid4()}
     :param name: the name for the tar ball. Default to {uuid4()}
     :param container_path: The path for the docker instance. Can be something like /Users/ge/project-folder/blah
-    :param pypath (bool): Whether this directory should be added to the python path
+    :param pypath (string): If false, don't modify Pythonpath. If a string, then the string will be the pythonpath to be included.
     :param excludes: The files paths to exclude, default to "--exclude='*__pycache__'"
     :param file_mask: The file mask for files to include. Default to "."
     :param compress: Whether to compress the tar ball. Default to true
@@ -309,11 +309,12 @@ class S3Output(Mount):
             note that the remote path is made absolute using the remote_cwd parameter
 
     :param name:
-    :param prefix: Need slash at the end.
+    :param prefix: Need slash at the end. This is the S3 folder to which host_path will be uploaded.
     :param local_path: When None, do not download those files
     :param interval:
     :param pypath:
     :param sync_s3:
+    :param host_path:
     :return:
     """
 

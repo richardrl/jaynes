@@ -214,7 +214,8 @@ class GSCode(Mount):
                  remote_tar=None, container_path=None,
                  docker_mount_type="bind",
                  pypath=False, excludes=None, file_mask=None,
-                 name=None, compress=True, exclude_vcs=True, exclude_from=None, **tar_options):
+                 name=None, compress=True, exclude_vcs=True, exclude_from=None, use_compress_program=None,
+                 **tar_options):
         # I fucking hate the behavior of python defaults. -- GY
         from .jaynes import RUN
         local_path = os.path.expandvars(local_path)
@@ -252,15 +253,16 @@ class GSCode(Mount):
                     type gtar >/dev/null 2>&1 && alias tar=`which gtar`
                     mkdir -p {self.temp_dir}
                     # Do not use absolute path in tar.
-                    tar {excludes} {tar_options} -c{"z" if compress else ""}f {local_tar} -C {local_abs} {file_mask}
+                    tar {f"--use-compress-program={use_compress_program}" if use_compress_program else ""} {excludes} {tar_options} -c{"z" if compress else ""}f {local_tar} -C {local_abs} {file_mask}
                     gsutil cp {local_tar} {prefix}/{tar_name}
                     """
             remote_tar = remote_tar or f"/tmp/{tar_name}"
             self.host_path = host_path
             self.host_setup = f"""
+                    sudo apt install zstd -y
                     gsutil cp {pathJoin(prefix, tar_name)} {remote_tar}
                     mkdir -p {host_path}
-                    tar -{"z" if compress else ""}xf {remote_tar}{tar_name if remote_tar.endswith('/') else ""} -C {host_path}
+                    tar {f"--use-compress-program={use_compress_program}" if use_compress_program else ""} -{"z" if compress else ""}xf {remote_tar}{tar_name if remote_tar.endswith('/') else ""} -C {host_path}
                     """
         else:
             filename = os.path.basename(local_path)

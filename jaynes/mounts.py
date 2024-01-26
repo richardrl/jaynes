@@ -351,8 +351,12 @@ class S3Output(Mount):
         else:
             print('S3UploadMount(**{}) generated no local_script.'.format(locals()))
             # pass
+
+        # first copy the output directory
+        # then copy the log directory...
         self.upload_script = f"""
-                aws s3 cp --recursive {host_path} {prefix} """  # --only-show-errors"""
+                aws s3 cp --recursive {host_path} {prefix} 
+                aws s3 cp --recursive /home/ec2-user/jaynes-mounts/ {prefix}  # --only-show-errors"""
         self.host_setup = f"""
                 echo 'making main_log directory {host_path}'
                 mkdir -p {host_path}

@@ -89,8 +89,9 @@ class S3Code(Mount):
                  remote_tar=None, container_path=None,
                  docker_mount_type="bind",
                  pypath=False, excludes=None, file_mask=None,
-                 name=None, compress=True, no_signin=False, acl=None, region=None,
-                 exclude_vcs=True, exclude_from=None, **tar_options):
+                 name=None, no_signin=False, acl=None, region=None,
+                 exclude_vcs=True, exclude_from=None, use_compress_program=None,
+                 **tar_options):
         # I fucking hate the behavior of python defaults. -- GY
         from .jaynes import RUN
         local_path = os.path.expandvars(local_path)
@@ -128,7 +129,7 @@ class S3Code(Mount):
                     type gtar >/dev/null 2>&1 && alias tar=`which gtar`
                     mkdir -p {self.temp_dir}
                     # Do not use absolute path in tar.
-                    tar {excludes} {tar_options} -c{"z" if compress else ""}f {local_tar} -C {local_abs} {file_mask}
+                    tar {f"--use-compress-program={use_compress_program}" if use_compress_program else ""} {excludes} {tar_options} -cf {local_tar} -C {local_abs} {file_mask}
                     aws s3 cp {local_tar} {prefix}/{tar_name} {'--acl {}'.format(acl) if acl else ''} {'--region {}'.format(region) if region else ''}
                     """
             remote_tar = remote_tar or f"/tmp/{tar_name}"
@@ -136,7 +137,7 @@ class S3Code(Mount):
             self.host_setup = f"""
                     aws s3 cp {pathJoin(prefix, tar_name)} {remote_tar} {'--no-sign-request' if no_signin else ''}
                     mkdir -p {host_path}
-                    sudo tar -{"z" if compress else ""}xf {remote_tar}{tar_name if remote_tar.endswith('/') else ""} -C {host_path}
+                    sudo tar {f"--use-compress-program={use_compress_program}" if use_compress_program else ""} -xf {remote_tar}{tar_name if remote_tar.endswith('/') else ""} -C {host_path}
                     """
         else:
             filename = os.path.basename(local_path)
